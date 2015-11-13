@@ -1,6 +1,6 @@
-// Type definitions for FullCalendar 1.6.1
-// Project: http://arshaw.com/fullcalendar/
-// Definitions by: Neil Stalker <https://github.com/nestalk>, Marcelo Camargo <https://github.com/hasellcamargo>
+// Type definitions for FullCalendar 2.4.0
+// Project: http://fullcalendar.io/
+// Definitions by: Neil Stalker <https://github.com/nestalk>, Marcelo Camargo <https://github.com/hasellcamargo>, Jesse Schalken <https://github.com/jesseschalken>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
 /// <reference path="../jquery/jquery.d.ts"/>
@@ -33,11 +33,35 @@ declare module FullCalendar {
          * Gets the version of Fullcalendar
          */
         version: string;
+
+        /**
+         * Formats a date range by intelligently inserting a dash between the two dates.
+         */
+        formatRange(moment1:moment.Moment, moment2:moment.Moment, formatString:string, separator?:string, isRTL?: boolean):string;
+
+        /**
+         * http://fullcalendar.io/docs/utilities/Moment/
+         */
+        moment: {
+            (date: number|number[]|string|Date|moment.Moment|Object):moment.Moment;
+            utc(date: number|number[]|string|Date|moment.Moment|Object):moment.Moment;
+            parseZone():moment.Moment;
+        };
+
+        /**
+         * Allows dynamic adding of handler functions. This method can be called for any callback in the API.
+         */
+        on(event:string, callback:Function):void;
+
+        /**
+         * Allows dynamic removing of handler functions. This method can be called for any callback in the API.
+         */
+        off(event:string, callback:Function):void;
     }
 
     export interface BusinessHours {
-        start: moment.Duration;
-        end: moment.Duration;
+        start: Duration;
+        end: Duration;
         dow: Array<number>;
     }
 
@@ -46,30 +70,47 @@ declare module FullCalendar {
         end: moment.Moment;
     }
 
+    /**
+     * http://fullcalendar.io/docs/display/buttonIcons/
+     */
+    interface ButtonIcons {
+        prev: string;
+        next: string;
+        prevYear: string;
+        nextYear: string;
+    }
+
     export interface Options extends AgendaOptions, EventDraggingResizingOptions, DroppingExternalElementsOptions, SelectionOptions {
 
-        // General display - http://arshaw.com/fullcalendar/docs/display/
+        // General display - http://fullcalendar.io/docs/display/
 
         header?: {
             left: string;
             center: string;
             right: string;
+        }|boolean;
+        customButtons?: {
+            [key:string]: {
+                text: string;
+                click: (e:JQueryEventObject) => void;
+                icon?: ButtonIcons,
+                themeIcon?: ButtonIcons,
+            }
         }
+        buttonIcons?: ButtonIcons,
         theme?: boolean
-        buttonIcons?: {
-            prev: string;
-            next: string;
-        }
+        themeButtonIcons?: ButtonIcons,
         firstDay?: number;
         isRTL?: boolean;
         weekends?: boolean;
         hiddenDays?: number[];
-        weekMode?: string;
+        fixedWeekCount?: boolean;
+        weekMode?: string; // "fixed"|"liquid"|"variable"
         weekNumbers?: boolean;
-        weekNumberCalculation?: any; // String/Function
+        weekNumberCalculation?: string|((m:moment.Moment) => number);
         businessHours?: boolean | BusinessHours;
-        height?: number;
-        contentHeight?: number;
+        height?: number|string; // number|"auto"
+        contentHeight?: number|string; // number|"auto"
         aspectRatio?: number;
         handleWindowResize?: boolean;
         viewRender?: (view: ViewObject, element: JQuery) => void;
@@ -81,106 +122,109 @@ declare module FullCalendar {
         timezone?: string | boolean;
         now?: moment.Moment | Date | string | (() => moment.Moment)
 
-        // Views - http://arshaw.com/fullcalendar/docs/views/
+        // Views - http://fullcalendar.io/docs/views/
 
+        views?: {
+            [name:string]: Options
+        };
         defaultView?: string;
 
-        // Current Date - http://arshaw.com/fullcalendar/docs/current_date/
+        // Current Date - http://fullcalendar.io/docs/current_date/
 
-        defaultDate?: moment.Moment | Date | string;
-        year?: number;
-        month?: number;
-        date?: number;
+        defaultDate?: Moment;
 
-        // Text/Time Customization - http://arshaw.com/fullcalendar/docs/text/
+        // Text/Time Customization - http://fullcalendar.io/docs/text/
 
-        timeFormat?: any; // String/ViewOptionHash
-        columnFormat?: any; // String/ViewOptionHash
-        titleFormat?: any; // String/ViewOptionHash
-        
+        timeFormat?: string|ViewOptionHash<string>;
+        columnFormat?: string|ViewOptionHash<string>;
+        titleFormat?: string|ViewOptionHash<string>;
+
         buttonText?: ButtonTextObject;
         monthNames?: Array<string>;
         monthNamesShort?: Array<string>;
         dayNames?: Array<string>;
         dayNamesShort?: Array<string>;
         weekNumberTitle?: string;
+        displayEventTime?: boolean;
+        displayEventEnd?: boolean;
+        eventLimitText?: string|((numEvents:number) => string);
+        dayPopoverFormat?: string;
 
-        // Clicking & Hovering - http://arshaw.com/fullcalendar/docs/mouse/
+        // Clicking & Hovering - http://fullcalendar.io/docs/mouse/
 
-        dayClick?: (date: Date, allDay: boolean, jsEvent: MouseEvent, view: ViewObject) => void;
-        eventClick?: (event: EventObject, jsEvent: MouseEvent, view: ViewObject) => any; // return type boolean or void
+        dayClick?: (date: moment.Moment, jsEvent: MouseEvent, view: ViewObject, resourceObj?:ResourceObject) => void;
+        eventClick?: (event: EventObject, jsEvent: MouseEvent, view: ViewObject) => void|boolean;
         eventMouseover?: (event: EventObject, jsEvent: MouseEvent, view: ViewObject) => void;
         eventMouseout?: (event: EventObject, jsEvent: MouseEvent, view: ViewObject) => void;
 
-        // Event Data - http://arshaw.com/fullcalendar/docs/event_data/
+        // Event Data - http://fullcalendar.io/docs/event_data/
 
-        /**
-         * This has one of the following types:
-         *
-         * - EventObject[]
-         * - string (JSON feed)
-         * - (start: Date | string, end: Date | string, callback: {(events: EventObject[]) => void;}) => void;
-         */
-        events?: any;
-
-        /**
-         * An array, each element being one of the following types:
-         *
-         * - EventSource
-         * - EventObject[]
-         * - string (JSON feed)
-         * - (start: Date | string, end: Date | string, callback: {(events: EventObject[]) => void;}) => void;
-         */
-        eventSources?: any[];
+        events?: EventSource;
+        eventSources?: EventSource[];
 
         allDayDefault?: boolean;
-        ignoreTimezone?: boolean;
         startParam?: string;
         endParam?: string
+        timezoneParam?: string;
         lazyFetching?: boolean;
+        defaultTimedEventDuration?: Duration;
+        defaultAllDayEventDuration?: Duration;
+        forceEventDuration?: boolean;
         eventDataTransform?: (eventData: any) => EventObject;
         loading?: (isLoading: boolean, view: ViewObject) => void;
 
-        // Event Rendering - http://arshaw.com/fullcalendar/docs/event_rendering/
+        // Event Rendering - http://fullcalendar.io/docs/event_rendering/
 
         eventColor?: string;
         eventBackgroundColor?: string;
         eventBorderColor?: string;
         eventTextColor?: string;
-        eventRender?: (event: EventObject, element: HTMLDivElement, view: ViewObject) => void;
-        eventAfterRender?: (event: EventObject, element: HTMLDivElement, view: ViewObject) => void;
+        nextDayThreshold?: Duration;
+        eventOrder?: string|string[]|((e1:EventObject, e2:EventObject) => number);
+        eventRender?: (event: EventObject, element: JQuery, view: ViewObject) => void;
+        eventAfterRender?: (event: EventObject, element: JQuery, view: ViewObject) => void;
         eventAfterAllRender?: (view: ViewObject) => void;
         eventDestroy?: (event: EventObject, element: JQuery, view: ViewObject) => void;
 
+        // Google Calendar - http://fullcalendar.io/docs/google_calendar/
 
-    }
-
-    export interface ViewOptionHash {
-        month?: any;
-        week?: any;
-        day?: any;
-        agenda?: any;
-        agendaDay?: any;
-        agendaWeek?: any;
-        basic?: any;
-        basicDay?: any;
-        basicWeek?: any;
-        ''?: any;
+        googleCalendarApiKey?: string;
     }
 
     /**
-     * Agenda Options - http://arshaw.com/fullcalendar/docs/agenda/
+     * http://fullcalendar.io/docs/views/View_Option_Hash/
+     */
+    export interface ViewOptionHash<T> {
+        month?: T;
+        week?: T;
+        day?: T;
+
+        agenda?: T;
+        agendaDay?: T;
+        agendaWeek?: T;
+
+        basic?: T;
+        basicDay?: T;
+        basicWeek?: T;
+
+        'default': T;
+
+        [name:string]: T;
+    }
+
+    /**
+     * Agenda Options - http://fullcalendar.io/docs/agenda/
      */
     export interface AgendaOptions {
         allDaySlot?: boolean;
         allDayText?: string;
-        slotDuration?: moment.Duration;
+        slotDuration?: Duration;
         slotLabelFormat?: string;
-        slotLabelInterval?: moment.Duration;
-        snapDuration?: moment.Duration;
-        scrollTime?: moment.Duration;
-        minTime?: moment.Duration; // Integer/String
-        maxTime?: moment.Duration; // Integer/String
+        slotLabelInterval?: Duration;
+        snapDuration?: Duration;
+        scrollTime?: Duration;
+        minTime?: Duration;
+        maxTime?: Duration;
         slotEventOverlap?: boolean;
     }
 
@@ -195,16 +239,16 @@ declare module FullCalendar {
         dragOpacity?: number; // float
         dragScroll?: boolean;
         eventOverlap?: boolean | ((stillEvent: EventObject, movingEvent: EventObject) => boolean);
-        eventConstraint?: BusinessHours | Timespan;
-        eventDragStart?: (event: EventObject, jsEvent: MouseEvent, ui: any, view: ViewObject) => void;
-        eventDragStop?: (event: EventObject, jsEvent: MouseEvent, ui: any, view: ViewObject) => void;
-        eventDrop?: (event: EventObject, delta: moment.Duration, revertFunc: Function, jsEvent: Event, ui: any, view: ViewObject) => void;
-        eventResizeStart?: (event: EventObject, jsEvent: MouseEvent, ui: any, view: ViewObject) => void;
-        eventResizeStop?: (event: EventObject, jsEvent: MouseEvent, ui: any, view: ViewObject) => void;
-        eventResize?: (event: EventObject, delta: moment.Duration, revertFunc: Function, jsEvent: Event, ui: any, view: ViewObject) => void;
+        eventConstraint?: EventId | BusinessHours | Timespan;
+        eventDragStart?: (event: EventObject, jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
+        eventDragStop?: (event: EventObject, jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
+        eventDrop?: (event: EventObject, delta: moment.Duration, revertFunc: (() => void), jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
+        eventResizeStart?: (event: EventObject, jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
+        eventResizeStop?: (event: EventObject, jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
+        eventResize?: (event: EventObject, delta: moment.Duration, revertFunc: (() => void), jsEvent: MouseEvent, ui: {}, view: ViewObject) => void;
     }
     /*
-    * Selection - http://arshaw.com/fullcalendar/docs/selection/
+    * Selection - http://fullcalendar.io/docs/selection/
     */
     export interface SelectionOptions {
         selectable?: boolean;
@@ -212,15 +256,23 @@ declare module FullCalendar {
         unselectAuto?: boolean;
         unselectCancel?: string;
         selectOverlap?: boolean | ((event: EventObject) => boolean);
-        selectConstraint?: Timespan | BusinessHours;
-        select?: (start: moment.Moment, end: moment.Moment, jsEvent: MouseEvent, view: ViewObject, resource?: any) => void;
-        unselect?: (view: ViewObject, jsEvent: Event) => void;
+        selectConstraint?: EventId | string | Timespan | BusinessHours;
+        select?: (start: moment.Moment, end: moment.Moment, jsEvent: MouseEvent, view: ViewObject, resource?: ResourceObject) => void;
+        unselect?: (view: ViewObject, jsEvent: MouseEvent) => void;
     }
 
     export interface DroppingExternalElementsOptions {
         droppable?: boolean;
-        dropAccept?: string | ((draggable: any) => boolean);
-        drop?: (date: moment.Moment, jsEvent: MouseEvent, ui: any) => void;
+        /**
+         * http://fullcalendar.io/docs/dropping/dropAccept/
+         * 
+         * "The value of dropAccept can be a string jQuery selector. It can also be a function that accepts the
+         * draggable item as a single argument, and returns true if the element can be dropped onto the calendar."
+         * 
+         * I don't know what a "draggable item" is. Probably a Node or HTMLElement?
+         */
+        dropAccept?: string | ((draggable: HTMLElement) => boolean);
+        drop?: (date: moment.Moment, jsEvent: MouseEvent, ui: {}) => void;
         eventReceive?: (event: EventObject) => void
     }
 
@@ -235,18 +287,39 @@ declare module FullCalendar {
         day?: string;
     }
 
-    export interface EventObject extends Timespan {
-        id?: any // String/number
+    /**
+     * The docs often say "an event ID" without saying what that means
+     * concretely, so define this so we don't have to remember.
+     */
+    type EventId = string|number;
+
+    export interface EventObject extends BaseEvent {
+        id?: EventId;
         title: string;
         allDay?: boolean;
+        start: Moment;
+        end?: Moment;
         url?: string;
-        className?: any; // string/Array<string>
-        editable?: boolean;
         source?: EventSource;
+    }
+
+    /**
+     * Shared by EventObject and EventSource
+     * http://fullcalendar.io/docs/event_data/Event_Object/
+     * http://fullcalendar.io/docs/event_data/Event_Source_Object/
+     */
+    interface BaseEvent {
         color?: string;
         backgroundColor?: string;
         borderColor?: string;
         textColor?: string;
+        className?: string|string[];
+        editable?: boolean;
+        startEditable?: boolean;
+        durationEditable?: boolean;
+        rendering?: string;
+        overlap?: boolean;
+        constraint?: EventId|string|BusinessHours|Timespan;
     }
 
     export interface ViewObject extends Timespan {
@@ -256,30 +329,64 @@ declare module FullCalendar {
         intervalEnd: moment.Moment;
     }
 
-    export interface EventSource extends JQueryAjaxSettings {
-
-        /**
-         * This has one of the following types:
-         *
-         * - EventObject[]
-         * - string (JSON feed)
-         * - (start: Date | string, end: Date | string, callback: {(events: EventObject[]) => void;}) => void;
-         */
-        events?: any;
-
-        color?: string;
-        backgroundColor?: string;
-        borderColor?: string;
-        textColor?: string;
-        className?: any; // string/Array<string>
-        editable?: boolean;
-        allDayDefault?: boolean;
-        ignoreTimezone?: boolean;
-        eventTransform?: any;
-        startParam?: string;
-        endParam?: string
+    /**
+     * http://fullcalendar.io/docs/event_data/events_function/
+     */
+    interface EventGeneratingFunction {
+        (start:moment.Moment, end:moment.Moment, timezone:string|boolean, callback:((events:EventObject[]) => void)):void;
     }
 
+    interface EventGeneratingFunctionNoTimezone {
+        (start:moment.Moment, end:moment.Moment, callback:((events:EventObject[]) => void)):void;
+    }
+
+    /**
+     * http://fullcalendar.io/docs/event_data/Event_Source_Object/
+     */
+    interface EventSourceOptions extends BaseEvent {
+        allDayDefault?: boolean;
+        eventDataTransform?: (eventData:any) => EventObject;
+    }
+
+    /**
+     * http://fullcalendar.io/docs/event_data/Event_Source_Object/
+     */
+    type EventSource = EventObject[] |
+        EventGeneratingFunction |
+        string |
+        (EventSourceOptions & JQueryAjaxSettings & {url: string}) |
+        (EventSourceOptions & {googleCalendarId: string}) |
+        (EventSourceOptions & {events: EventObject[]|EventGeneratingFunctionNoTimezone});
+
+    export type ResourceId = string|number;
+
+    /**
+     * http://fullcalendar.io/docs/resource_data/Resource_Object/
+     */
+    export interface ResourceObject {
+        id: ResourceId;
+        title: string;
+        eventColor?: string;
+        eventBackgroundColor?: string;
+        eventBorderColor?: string;
+        eventTextColor?: string;
+        eventClassName?: string|string[];
+        children?: ResourceObject[];
+        parentId?: string;
+        parent?: ResourceObject|void;
+    }
+
+    /**
+     * http://fullcalendar.io/docs/utilities/Moment/
+     * "In the API, most options that accept a Moment will also conveniently accept anything that the moment() constructor accepts"
+     */
+    export type Moment = moment.Moment|string|number|Date;
+
+    /**
+     * http://fullcalendar.io/docs/utilities/Duration/
+     * In FullCalendar's API, most options that accept Durations also conveniently accept anything that the moment.duration constructor accepts
+     */
+    export type Duration = moment.Duration|string;
 }
 
 interface JQuery {
@@ -337,27 +444,22 @@ interface JQuery {
     /**
      * Moves the calendar to an arbitrary year/month/date.
      */
-    fullCalendar(method: 'gotoDate', year: number, month?: number, date?: number): void;
-
-    /**
-     * Moves the calendar to an arbitrary date.
-     */
-    fullCalendar(method: 'gotoDate', date: Date | string): void;
+    fullCalendar(method: 'gotoDate', date:FullCalendar.Moment): void;
 
     /**
      * Moves the calendar forward/backward an arbitrary amount of time.
      */
-    fullCalendar(method: 'incrementDate', year: number, month?: number, date?: number): void;
+    fullCalendar(method: 'incrementDate', duration:FullCalendar.Duration): void;
 
     /**
      * Returns a Date object for the current date of the calendar.
      */
-    fullCalendar(method: 'getDate'): Date;
+    fullCalendar(method: 'getDate'): moment.Moment;
 
     /**
      * A method for programmatically selecting a period of time.
      */
-    fullCalendar(method: 'select', startDate: Date, endDate: Date, allDay: boolean): void;
+    fullCalendar(method: 'select', start: FullCalendar.Moment, end?: FullCalendar.Moment, resource?: FullCalendar.ResourceObject|FullCalendar.ResourceId): void;
 
     /**
      * A method for programmatically clearing the current selection.
@@ -372,22 +474,12 @@ interface JQuery {
     /**
      * Retrieves events that FullCalendar has in memory.
      */
-    fullCalendar(method: 'clientEvents', idOrfilter?: any): Array<FullCalendar.EventObject>;
-
-    /**
-     * Retrieves events that FullCalendar has in memory.
-     */
-    fullCalendar(method: 'clientEvents', idOrfilter?: (e: FullCalendar.EventObject) => boolean): Array<FullCalendar.EventObject>;
+    fullCalendar(method: 'clientEvents', idOrfilter?: FullCalendar.EventId|((e:FullCalendar.EventObject) => boolean)): Array<FullCalendar.EventObject>;
 
     /**
      * Removes events from the calendar.
      */
-    fullCalendar(method: 'removeEvents', idOrfilter?: any): void;
-
-    /**
-     * Removes events from the calendar.
-     */
-    fullCalendar(method: 'removeEvents', idOrfilter?: (e: FullCalendar.EventObject) => boolean): void;
+    fullCalendar(method: 'removeEvents', idOrfilter?: FullCalendar.EventId|((e:FullCalendar.EventObject) => boolean)): void;
 
     /**
      * Refetches events from all sources and rerenders them on the screen.
@@ -397,12 +489,12 @@ interface JQuery {
     /**
      * Dynamically adds an event source.
      */
-    fullCalendar(method: 'addEventSource', source: any): void;
+    fullCalendar(method: 'addEventSource', source: FullCalendar.EventSource): void;
 
     /**
      * Dynamically removes an event source.
      */
-    fullCalendar(method: 'removeEventSource', source: any): void;
+    fullCalendar(method: 'removeEventSource', source: FullCalendar.EventSource): void;
 
     /**
      * Renders a new event on the calendar.
@@ -415,6 +507,41 @@ interface JQuery {
     fullCalendar(method: 'rerenderEvents'): void;
 
     /**
+     * A method that retrieves all Resource Objects in memory.
+     */
+    fullCalendar(method: 'getResources'): FullCalendar.ResourceObject[];
+
+    /**
+     * A method that retrieves a specific Resource Object in memory.
+     */
+    fullCalendar(method: 'getResourceById', resourceId:FullCalendar.ResourceId): FullCalendar.ResourceObject|void;
+
+    /**
+     * Retrieves a list of Event Objects that are associated with the given resource.
+     */
+    fullCalendar(method: 'getResourceEvents', idOrResource:FullCalendar.ResourceId|FullCalendar.ResourceObject): FullCalendar.EventObject[];
+
+    /**
+     * Gets the Resource Object that is associated with the given event.
+     */
+    fullCalendar(method: 'getEventResource', idOrEvent:FullCalendar.EventId|FullCalendar.EventObject): FullCalendar.ResourceObject;
+
+    /**
+     * Allows programmatic rendering of a new resource on the calendar after the initial set of resources has already been displayed.
+     */
+    fullCalendar(method: 'addResource', resource:FullCalendar.ResourceObject, scroll:boolean): void;
+
+    /**
+     * Programmatically removes a resource with the given resourceId from the current view.
+     */
+    fullCalendar(method: 'removeResource', idOrResource:FullCalendar.ResourceId|FullCalendar.ResourceObject): void;
+
+    /**
+     * Causes the resource data to be fetched and freshly rerendered.
+     */
+    fullCalendar(method: 'refetchResources'): void;
+
+    /**
      * Create calendar object
      */
     fullCalendar(options: FullCalendar.Options): JQuery;
@@ -422,9 +549,27 @@ interface JQuery {
     /**
      * Generic method function
      */
-    fullCalendar(method: string, arg1: any, arg2: any, arg3: any): void;
+    fullCalendar(method: string, ...args:{}[]): void;
 }
 
 interface JQueryStatic {
     fullCalendar: FullCalendar.Calendar;
 }
+
+/**
+ * FullCalendar will add these methods to the moment.Moment prototype.
+ * http://fullcalendar.io/docs/utilities/Moment/
+ */
+declare namespace moment {
+    interface Moment {
+        hasTime():boolean;
+        hasZone():boolean;
+
+        stripTime():void;
+        stripZone():void;
+
+        time():moment.Duration;
+        time(duration:FullCalendar.Duration):moment.Moment;
+    }
+}
+

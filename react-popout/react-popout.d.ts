@@ -34,6 +34,7 @@ declare module "react-popout" {
         title: string;
         url?: string;
         onClosing?: () => void;
+        onMessage?: (event:MessageEvent) => void;
         options?: WindowOptions;
         window?: Window;
     }

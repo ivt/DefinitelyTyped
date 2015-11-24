@@ -28,6 +28,7 @@ class Test extends React.Component<any, any> {
       <PopoutWindow
           title="react-popout"
           onClosing={() => alert('window closing')}
+          onMessage={(event:MessageEvent) => alert( 'received event: ' + event.data)}
           options={options}
           window={window}>
           <div>This is a popout window!</div>
